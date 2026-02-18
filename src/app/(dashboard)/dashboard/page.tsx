@@ -271,6 +271,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page header with filters */}
       <PageHeader title="Дашборд" description="Все ключевые показатели">
+        <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <LocationFilter
             value={selectedLocation}
@@ -382,10 +383,9 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-      </PageHeader>
 
-      {/* Comparison period selector */}
-      <div className="flex flex-wrap items-center gap-3">
+        {/* Comparison period selector */}
+        <div className="flex flex-wrap items-center gap-3">
         <ArrowLeftRight className="h-4 w-4 text-stone-400" />
         <span className="text-sm text-stone-500">Сравнивать с:</span>
 
@@ -486,6 +486,8 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+      </div>
+      </PageHeader>
 
       {/* === ПРОДАЖИ === */}
       <h2 className="text-base font-semibold text-slate-700">Продажи</h2>
