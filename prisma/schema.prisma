@@ -15,6 +15,19 @@ model User {
   role      String   @default("MANAGER") // OWNER, MANAGER, VIEWER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  importBatches ImportBatch[]
+}
+
+model ImportBatch {
+  id          String   @id @default(cuid())
+  fileName    String
+  recordCount Int      @default(0)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  reports DailyReport[]
 }
 
 model Location {
@@ -79,6 +92,9 @@ model DailyReport {
 
   // Время выдачи заказа (в минутах)
   orderDeliveryTime Float @default(0)
+
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

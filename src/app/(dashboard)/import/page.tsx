@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Upload,
   FileSpreadsheet,
@@ -8,11 +8,24 @@ import {
   AlertCircle,
   Loader2,
   X,
+  Trash2,
+  Clock,
 } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface SheetResult {
@@ -30,6 +43,15 @@ interface ImportResult {
   sheetNames: string[];
 }
 
+interface ImportBatchItem {
+  id: string;
+  fileName: string;
+  recordCount: number;
+  createdAt: string;
+  user: { name: string };
+  _count: { reports: number };
+}
+
 type UploadState = "idle" | "selected" | "uploading" | "success" | "error";
 
 function formatFileSize(bytes: number): string {
@@ -45,6 +67,52 @@ export default function ImportPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Import history
+  const [batches, setBatches] = useState<ImportBatchItem[]>([]);
+  const [batchesLoading, setBatchesLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  async function fetchBatches() {
+    setBatchesLoading(true);
+    try {
+      const res = await fetch("/api/import/batches");
+      if (res.ok) {
+        setBatches(await res.json());
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setBatchesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchBatches();
+  }, []);
+
+  async function handleDeleteBatch(id: string) {
+    setDeleteSubmitting(true);
+    try {
+      const res = await fetch(`/api/import/batches/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Удалено ${data.deletedReports} записей`);
+        setDeleteId(null);
+        fetchBatches();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Ошибка при удалении");
+      }
+    } catch {
+      toast.error("Ошибка сети");
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  }
 
   function selectFile(f: File) {
     if (!f.name.endsWith(".xlsx") && !f.name.endsWith(".xls")) {
@@ -106,6 +174,7 @@ export default function ImportPage() {
       setResult(data);
       setState("success");
       toast.success(`Импортировано ${data.totalImported} записей`);
+      fetchBatches();
     } catch (err) {
       setErrorMessage((err as Error).message);
       setState("error");
@@ -280,6 +349,92 @@ export default function ImportPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Import history */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="size-5" />
+            История импортов
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {batchesLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-14 w-full animate-pulse rounded bg-muted" />
+              ))}
+            </div>
+          ) : batches.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Нет импортов</p>
+          ) : (
+            <div className="space-y-2">
+              {batches.map((batch) => (
+                <div
+                  key={batch.id}
+                  className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileSpreadsheet className="size-5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{batch.fileName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(parseISO(batch.createdAt), "d MMM yyyy, HH:mm", { locale: ru })}
+                        {" \u00b7 "}
+                        {batch._count.reports} записей
+                        {" \u00b7 "}
+                        {batch.user.name}
+                      </p>
+                    </div>
+                  </div>
+                  <Dialog
+                    open={deleteId === batch.id}
+                    onOpenChange={(open) => {
+                      if (!open) setDeleteId(null);
+                    }}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteId(batch.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Удалить импорт?</DialogTitle>
+                        <DialogDescription>
+                          Будут удалены все {batch._count.reports} записей,
+                          загруженных из файла &laquo;{batch.fileName}&raquo;.
+                          Это действие необратимо.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteId(null)}>
+                          Отмена
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          disabled={deleteSubmitting}
+                          onClick={() => handleDeleteBatch(batch.id)}
+                        >
+                          {deleteSubmitting && (
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                          )}
+                          Удалить
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -52,6 +52,15 @@ export async function POST(request: NextRequest) {
     const { sheetNames, rowsBySheet, skippedBySheet } =
       parseExcelBuffer(buffer);
 
+    // Create import batch
+    const userId = session.user.id as string;
+    const batch = await prisma.importBatch.create({
+      data: {
+        fileName: file.name,
+        userId,
+      },
+    });
+
     const results: SheetResult[] = [];
 
     for (const sheetName of sheetNames) {
@@ -104,6 +113,7 @@ export async function POST(request: NextRequest) {
           hoursWorked: row.hoursWorked,
           productivityFact: row.productivityFact,
           orderDeliveryTime: row.orderDeliveryTime,
+          importBatchId: batch.id,
         };
 
         try {
@@ -128,9 +138,17 @@ export async function POST(request: NextRequest) {
       results.push({ sheetName, imported, skipped, errors });
     }
 
+    const totalImported = results.reduce((s, r) => s + r.imported, 0);
+
+    // Update batch with final count
+    await prisma.importBatch.update({
+      where: { id: batch.id },
+      data: { recordCount: totalImported },
+    });
+
     const response: ParseResult = {
       sheets: results,
-      totalImported: results.reduce((s, r) => s + r.imported, 0),
+      totalImported,
       totalSkipped: results.reduce((s, r) => s + r.skipped, 0),
       totalErrors: results.reduce((s, r) => s + r.errors.length, 0),
       sheetNames,
