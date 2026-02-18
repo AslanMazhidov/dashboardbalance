@@ -277,6 +277,8 @@ export default function DashboardPage() {
         />
         <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
+          <CalendarIcon className="h-4 w-4 text-stone-400" />
+          <span className="w-[95px] text-sm text-stone-500">Период:</span>
           {/* Period mode toggle */}
           <div className="flex rounded-lg border border-stone-200">
             <button
@@ -385,7 +387,7 @@ export default function DashboardPage() {
         {/* Comparison period selector */}
         <div className="flex flex-wrap items-center gap-3">
         <ArrowLeftRight className="h-4 w-4 text-stone-400" />
-        <span className="text-sm text-stone-500">Сравнивать с:</span>
+        <span className="w-[95px] text-sm text-stone-500">Сравнивать с:</span>
 
         <div className="flex rounded-lg border border-stone-200">
           <button
