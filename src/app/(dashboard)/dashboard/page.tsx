@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   DollarSign,
   Target,
@@ -13,7 +13,13 @@ import {
   CalendarIcon,
   ArrowLeftRight,
 } from "lucide-react";
-import { subDays, subYears, format } from "date-fns";
+import {
+  subDays,
+  subYears,
+  format,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +47,18 @@ import { OperationsChart } from "@/components/charts/operations-chart";
 import { formatCurrency, formatDate, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+type PeriodMode = "months" | "dates";
 type CompareMode = "prev" | "year" | "custom";
+
+const MONTH_NAMES = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+];
+
+function getYearOptions() {
+  const current = new Date().getFullYear();
+  return [current, current - 1, current - 2].map(String);
+}
 
 interface SummaryData {
   salesFact: number;
@@ -108,12 +125,43 @@ const COMPARE_LABELS: Record<CompareMode, string> = {
   custom: "vs выбр. период",
 };
 
+const YEAR_OPTIONS = getYearOptions();
+
 export default function DashboardPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
-  const [dateFrom, setDateFrom] = useState(() => subDays(new Date(), 60));
-  const [dateTo, setDateTo] = useState(() => new Date());
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("months");
+  const [selectedYear, setSelectedYear] = useState(() => String(new Date().getFullYear()));
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState(() => String(new Date().getMonth()));
+  const [dateFrom, setDateFrom] = useState(() => startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState(() => endOfMonth(new Date()));
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
+
+  const syncDatesFromYM = useCallback((year: string, month: string) => {
+    const d = new Date(Number(year), Number(month), 1);
+    setDateFrom(startOfMonth(d));
+    setDateTo(endOfMonth(d));
+  }, []);
+
+  const handleYearChange = useCallback((y: string) => {
+    setSelectedYear(y);
+    syncDatesFromYM(y, selectedMonthIdx);
+  }, [selectedMonthIdx, syncDatesFromYM]);
+
+  const handleMonthIdxChange = useCallback((m: string) => {
+    setSelectedMonthIdx(m);
+    syncDatesFromYM(selectedYear, m);
+  }, [selectedYear, syncDatesFromYM]);
+
+  const handlePeriodModeChange = useCallback((mode: PeriodMode) => {
+    setPeriodMode(mode);
+    if (mode === "months") {
+      setSelectedYear(String(dateFrom.getFullYear()));
+      setSelectedMonthIdx(String(dateFrom.getMonth()));
+      setDateFrom(startOfMonth(dateFrom));
+      setDateTo(endOfMonth(dateFrom));
+    }
+  }, [dateFrom]);
 
   // Comparison period
   const [compareMode, setCompareMode] = useState<CompareMode>("prev");
@@ -220,56 +268,110 @@ export default function DashboardPage() {
             onChange={setSelectedLocation}
             locations={locations}
           />
-          <Popover open={fromOpen} onOpenChange={setFromOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-[140px] justify-start text-left font-normal",
-                  !dateFrom && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFrom ? format(dateFrom, "dd.MM.yyyy") : "С"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFrom}
-                onSelect={(date) => {
-                  if (date) setDateFrom(date);
-                  setFromOpen(false);
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <Popover open={toOpen} onOpenChange={setToOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-[140px] justify-start text-left font-normal",
-                  !dateTo && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateTo ? format(dateTo, "dd.MM.yyyy") : "По"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateTo}
-                onSelect={(date) => {
-                  if (date) setDateTo(date);
-                  setToOpen(false);
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+
+          {/* Period mode toggle */}
+          <div className="flex rounded-lg border border-stone-200">
+            <button
+              onClick={() => handlePeriodModeChange("months")}
+              className={cn(
+                "px-3 py-1.5 text-sm transition-colors rounded-l-lg",
+                periodMode === "months"
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-500 hover:text-stone-700"
+              )}
+            >
+              Месяц
+            </button>
+            <button
+              onClick={() => handlePeriodModeChange("dates")}
+              className={cn(
+                "px-3 py-1.5 text-sm transition-colors rounded-r-lg",
+                periodMode === "dates"
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-500 hover:text-stone-700"
+              )}
+            >
+              Даты
+            </button>
+          </div>
+
+          {periodMode === "months" ? (
+            <>
+              <Select value={selectedYear} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEAR_OPTIONS.map((y) => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonthIdx} onValueChange={handleMonthIdxChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_NAMES.map((name, i) => (
+                    <SelectItem key={i} value={String(i)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          ) : (
+            <>
+              <Popover open={fromOpen} onOpenChange={setFromOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[140px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd.MM.yyyy") : "С"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={(date) => {
+                      if (date) setDateFrom(date);
+                      setFromOpen(false);
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover open={toOpen} onOpenChange={setToOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[140px] justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd.MM.yyyy") : "По"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={(date) => {
+                      if (date) setDateTo(date);
+                      setToOpen(false);
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
         </div>
       </PageHeader>
 
