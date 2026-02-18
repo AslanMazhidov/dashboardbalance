@@ -6,6 +6,7 @@ services:
     environment:
       - DATABASE_URL=file:/app/data/balance.db
       - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_TRUST_HOST=true
     volumes:
       - db-data:/app/data
     restart: unless-stopped
