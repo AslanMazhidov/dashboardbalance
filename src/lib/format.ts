@@ -23,21 +23,21 @@ export function formatPercent(value: number): string {
 }
 
 /**
- * Format a date to "DD.MM.YYYY" format using Russian locale.
+ * Format a date with day of week.
  * Accepts both Date objects and ISO date strings.
- * Example: new Date(2024, 0, 15) -> "15.01.2024"
+ * Example: new Date(2024, 0, 15) -> "Ср, 15.01.2024"
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? parseISO(date) : date;
-  return format(d, "dd.MM.yyyy", { locale: ru });
+  return format(d, "EEEEEE, dd.MM.yyyy", { locale: ru });
 }
 
 /**
- * Short date for chart axis labels.
- * Example: "2024-01-15T00:00:00.000Z" -> "15 янв"
+ * Short date with day of week for chart axis labels.
+ * Example: "2024-01-15T00:00:00.000Z" -> "Ср, 15 янв"
  */
 export function formatShortDate(date: string): string {
-  return format(parseISO(date), "d MMM", { locale: ru });
+  return format(parseISO(date), "EEEEEE, d MMM", { locale: ru });
 }
 
 /**
