@@ -34,7 +34,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { MetricCard } from "@/components/ui/metric-card";
-import { PageHeader } from "@/components/ui/page-header";
 import { LocationFilter } from "@/components/dashboard/location-filter";
 import { SalesPlanFact } from "@/components/charts/sales-plan-fact";
 import { OperationsChart } from "@/components/charts/operations-chart";
@@ -269,16 +268,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header with filters */}
-      <PageHeader title="Дашборд" description="Все ключевые показатели">
+      {/* Header: location selector + period filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <LocationFilter
+          value={selectedLocation}
+          onChange={setSelectedLocation}
+          locations={locations}
+        />
         <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <LocationFilter
-            value={selectedLocation}
-            onChange={setSelectedLocation}
-            locations={locations}
-          />
-
           {/* Period mode toggle */}
           <div className="flex rounded-lg border border-stone-200">
             <button
@@ -487,7 +485,7 @@ export default function DashboardPage() {
         )}
       </div>
       </div>
-      </PageHeader>
+      </div>
 
       {/* === ПРОДАЖИ === */}
       <h2 className="text-base font-semibold text-slate-700">Продажи</h2>
