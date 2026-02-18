@@ -70,6 +70,7 @@ export default function ImportPage() {
 
   // Import history
   const [batches, setBatches] = useState<ImportBatchItem[]>([]);
+  const [orphanedCount, setOrphanedCount] = useState(0);
   const [batchesLoading, setBatchesLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
@@ -79,7 +80,9 @@ export default function ImportPage() {
     try {
       const res = await fetch("/api/import/batches");
       if (res.ok) {
-        setBatches(await res.json());
+        const data = await res.json();
+        setBatches(data.batches);
+        setOrphanedCount(data.orphanedCount);
       }
     } catch {
       // silently fail
@@ -96,6 +99,28 @@ export default function ImportPage() {
     setDeleteSubmitting(true);
     try {
       const res = await fetch(`/api/import/batches/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Удалено ${data.deletedReports} записей`);
+        setDeleteId(null);
+        fetchBatches();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Ошибка при удалении");
+      }
+    } catch {
+      toast.error("Ошибка сети");
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  }
+
+  async function handleDeleteOrphaned() {
+    setDeleteSubmitting(true);
+    try {
+      const res = await fetch("/api/import/batches/orphaned", {
         method: "DELETE",
       });
       if (res.ok) {
@@ -365,10 +390,65 @@ export default function ImportPage() {
                 <div key={i} className="h-14 w-full animate-pulse rounded bg-muted" />
               ))}
             </div>
-          ) : batches.length === 0 ? (
+          ) : batches.length === 0 && orphanedCount === 0 ? (
             <p className="text-sm text-muted-foreground">Нет импортов</p>
           ) : (
             <div className="space-y-2">
+              {orphanedCount > 0 && (
+                <div className="flex items-center justify-between rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-950/30">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="size-5 shrink-0 text-amber-500" />
+                    <div>
+                      <p className="font-medium">Старые данные (без привязки к импорту)</p>
+                      <p className="text-sm text-muted-foreground">
+                        {orphanedCount} записей
+                      </p>
+                    </div>
+                  </div>
+                  <Dialog
+                    open={deleteId === "_orphaned"}
+                    onOpenChange={(open) => {
+                      if (!open) setDeleteId(null);
+                    }}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteId("_orphaned")}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Удалить старые данные?</DialogTitle>
+                        <DialogDescription>
+                          Будут удалены {orphanedCount} записей, загруженных
+                          до введения системы отслеживания импортов.
+                          Это действие необратимо.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteId(null)}>
+                          Отмена
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          disabled={deleteSubmitting}
+                          onClick={handleDeleteOrphaned}
+                        >
+                          {deleteSubmitting && (
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                          )}
+                          Удалить
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
               {batches.map((batch) => (
                 <div
                   key={batch.id}

@@ -33,6 +33,14 @@ export function formatDate(date: Date | string): string {
 }
 
 /**
+ * Short date for chart axis labels.
+ * Example: "2024-01-15T00:00:00.000Z" -> "15 янв"
+ */
+export function formatShortDate(date: string): string {
+  return format(parseISO(date), "d MMM", { locale: ru });
+}
+
+/**
  * Format minutes as h:mm.
  * Example: 191 -> "3:11", 45 -> "0:45"
  */

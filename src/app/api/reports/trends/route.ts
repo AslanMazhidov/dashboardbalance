@@ -53,20 +53,77 @@ export async function GET(request: NextRequest) {
       orderBy: { date: "asc" },
     });
 
-    const data = reports.map((report) => ({
-      date: report.date.toISOString(),
-      salesPlan: report.salesPlan,
-      salesFact: report.salesFact,
-      discounts: report.discounts,
-      salesWithDiscounts: report.salesWithDiscounts,
-      discountPercent: report.discountPercent,
-      yandexFood: report.yandexFood,
-      ordersFact: report.ordersFact,
-      avgCheckFact: report.avgCheckFact,
-      loyaltyPenetration: report.loyaltyPenetration,
-      productivityPlan: report.productivityPlan,
-      productivityFact: report.productivityFact,
-      orderDeliveryTime: report.orderDeliveryTime,
+    // Aggregate by date (multiple locations may share the same date)
+    const byDate = new Map<
+      string,
+      {
+        salesPlan: number;
+        salesFact: number;
+        discounts: number;
+        salesWithDiscounts: number;
+        discountPercent: number;
+        yandexFood: number;
+        ordersFact: number;
+        avgCheckFact: number;
+        loyaltyPenetration: number;
+        productivityPlan: number;
+        productivityFact: number;
+        orderDeliveryTime: number;
+        count: number;
+      }
+    >();
+
+    for (const r of reports) {
+      const key = r.date.toISOString();
+      const existing = byDate.get(key);
+      if (existing) {
+        existing.salesPlan += r.salesPlan;
+        existing.salesFact += r.salesFact;
+        existing.discounts += r.discounts;
+        existing.salesWithDiscounts += r.salesWithDiscounts;
+        existing.yandexFood += r.yandexFood;
+        existing.ordersFact += r.ordersFact;
+        // Weighted-average fields: accumulate, divide later
+        existing.discountPercent += r.discountPercent;
+        existing.avgCheckFact += r.avgCheckFact;
+        existing.loyaltyPenetration += r.loyaltyPenetration;
+        existing.productivityPlan += r.productivityPlan;
+        existing.productivityFact += r.productivityFact;
+        existing.orderDeliveryTime += r.orderDeliveryTime;
+        existing.count += 1;
+      } else {
+        byDate.set(key, {
+          salesPlan: r.salesPlan,
+          salesFact: r.salesFact,
+          discounts: r.discounts,
+          salesWithDiscounts: r.salesWithDiscounts,
+          discountPercent: r.discountPercent,
+          yandexFood: r.yandexFood,
+          ordersFact: r.ordersFact,
+          avgCheckFact: r.avgCheckFact,
+          loyaltyPenetration: r.loyaltyPenetration,
+          productivityPlan: r.productivityPlan,
+          productivityFact: r.productivityFact,
+          orderDeliveryTime: r.orderDeliveryTime,
+          count: 1,
+        });
+      }
+    }
+
+    const data = Array.from(byDate.entries()).map(([date, v]) => ({
+      date,
+      salesPlan: v.salesPlan,
+      salesFact: v.salesFact,
+      discounts: v.discounts,
+      salesWithDiscounts: v.salesWithDiscounts,
+      discountPercent: v.count > 1 ? v.discountPercent / v.count : v.discountPercent,
+      yandexFood: v.yandexFood,
+      ordersFact: v.ordersFact,
+      avgCheckFact: v.count > 1 ? v.avgCheckFact / v.count : v.avgCheckFact,
+      loyaltyPenetration: v.count > 1 ? v.loyaltyPenetration / v.count : v.loyaltyPenetration,
+      productivityPlan: v.count > 1 ? v.productivityPlan / v.count : v.productivityPlan,
+      productivityFact: v.count > 1 ? v.productivityFact / v.count : v.productivityFact,
+      orderDeliveryTime: v.count > 1 ? v.orderDeliveryTime / v.count : v.orderDeliveryTime,
     }));
 
     return NextResponse.json({ data });

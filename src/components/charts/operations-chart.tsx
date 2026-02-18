@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate, formatShortDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface OperationsChartData {
@@ -64,7 +64,7 @@ function CustomTooltip({
 
   return (
     <div className="rounded-lg border bg-background p-3 shadow-md">
-      <p className="mb-2 text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="mb-2 text-sm font-medium text-muted-foreground">{label ? formatDate(label) : label}</p>
       {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2 text-sm">
           <span
@@ -115,6 +115,7 @@ export function OperationsChart({ data }: OperationsChartProps) {
               className="text-muted-foreground"
               tickLine={false}
               axisLine={false}
+              tickFormatter={formatShortDate}
             />
             {/* Left axis: orders (count) & delivery time (min) */}
             <YAxis
