@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
     const locationId = searchParams.get("locationId");
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
+    const compareFrom = searchParams.get("compareFrom");
+    const compareTo = searchParams.get("compareTo");
 
     if (!dateFrom || !dateTo) {
       return NextResponse.json(
@@ -24,10 +26,17 @@ export async function GET(request: NextRequest) {
     const from = new Date(dateFrom);
     const to = new Date(dateTo);
 
-    // Calculate the previous period with the same duration
-    const durationMs = to.getTime() - from.getTime();
-    const prevFrom = new Date(from.getTime() - durationMs);
-    const prevTo = new Date(from.getTime());
+    // Comparison period: use explicit params or auto-calculate previous period
+    let prevFrom: Date;
+    let prevTo: Date;
+    if (compareFrom && compareTo) {
+      prevFrom = new Date(compareFrom);
+      prevTo = new Date(compareTo);
+    } else {
+      const durationMs = to.getTime() - from.getTime();
+      prevFrom = new Date(from.getTime() - durationMs);
+      prevTo = new Date(from.getTime());
+    }
 
     // Build location filter
     const locationFilter: { locationId?: string } = {};
@@ -42,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const wherePreviousPeriod = {
       ...locationFilter,
-      date: { gte: prevFrom, lt: prevTo },
+      date: { gte: prevFrom, lte: prevTo },
     };
 
     // Fetch current and previous period aggregates in parallel
@@ -54,6 +63,8 @@ export async function GET(request: NextRequest) {
           salesPlan: true,
           ordersFact: true,
           ordersPlan: true,
+          discounts: true,
+          yandexFood: true,
         },
       }),
       prisma.dailyReport.aggregate({
@@ -70,21 +81,30 @@ export async function GET(request: NextRequest) {
         where: wherePreviousPeriod,
         _sum: {
           salesFact: true,
+          salesPlan: true,
           ordersFact: true,
+          discounts: true,
+          yandexFood: true,
         },
       }),
       prisma.dailyReport.aggregate({
         where: wherePreviousPeriod,
         _avg: {
           avgCheckFact: true,
+          loyaltyPenetration: true,
+          productivityFact: true,
+          orderDeliveryTime: true,
         },
       }),
     ]);
 
+    // Current period values
     const salesFact = currentAgg._sum.salesFact || 0;
     const salesPlan = currentAgg._sum.salesPlan || 0;
     const ordersFact = currentAgg._sum.ordersFact || 0;
     const ordersPlan = currentAgg._sum.ordersPlan || 0;
+    const discountsTotal = currentAgg._sum.discounts || 0;
+    const yandexFoodTotal = currentAgg._sum.yandexFood || 0;
 
     const avgCheckFact = currentAvg._avg.avgCheckFact || 0;
     const avgCheckPlan = currentAvg._avg.avgCheckPlan || 0;
@@ -92,7 +112,7 @@ export async function GET(request: NextRequest) {
     const productivityAvg = currentAvg._avg.productivityFact || 0;
     const orderTimeAvg = currentAvg._avg.orderDeliveryTime || 0;
 
-    // Calculate deviations
+    // Deviations (plan vs fact)
     const salesDeviation =
       salesPlan > 0 ? ((salesFact - salesPlan) / salesPlan) * 100 : 0;
     const ordersDeviation =
@@ -104,22 +124,28 @@ export async function GET(request: NextRequest) {
 
     // Previous period values
     const prevSalesFact = prevAgg._sum.salesFact || 0;
+    const prevSalesPlan = prevAgg._sum.salesPlan || 0;
     const prevOrdersFact = prevAgg._sum.ordersFact || 0;
+    const prevDiscounts = prevAgg._sum.discounts || 0;
+    const prevYandexFood = prevAgg._sum.yandexFood || 0;
     const prevAvgCheckFact = prevAvg._avg.avgCheckFact || 0;
+    const prevLoyalty = prevAvg._avg.loyaltyPenetration || 0;
+    const prevProductivity = prevAvg._avg.productivityFact || 0;
+    const prevOrderTime = prevAvg._avg.orderDeliveryTime || 0;
 
-    // Calculate percentage changes compared to previous period
-    const salesChange =
-      prevSalesFact > 0
-        ? ((salesFact - prevSalesFact) / prevSalesFact) * 100
-        : 0;
-    const ordersChange =
-      prevOrdersFact > 0
-        ? ((ordersFact - prevOrdersFact) / prevOrdersFact) * 100
-        : 0;
-    const avgCheckChange =
-      prevAvgCheckFact > 0
-        ? ((avgCheckFact - prevAvgCheckFact) / prevAvgCheckFact) * 100
-        : 0;
+    // Percentage change helper
+    const pctChange = (curr: number, prev: number) =>
+      prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+
+    const salesChange = pctChange(salesFact, prevSalesFact);
+    const salesPlanChange = pctChange(salesPlan, prevSalesPlan);
+    const ordersChange = pctChange(ordersFact, prevOrdersFact);
+    const avgCheckChange = pctChange(avgCheckFact, prevAvgCheckFact);
+    const discountsChange = pctChange(discountsTotal, prevDiscounts);
+    const yandexFoodChange = pctChange(yandexFoodTotal, prevYandexFood);
+    const loyaltyChange = pctChange(loyaltyPenetrationAvg, prevLoyalty);
+    const productivityChange = pctChange(productivityAvg, prevProductivity);
+    const orderTimeChange = pctChange(orderTimeAvg, prevOrderTime);
 
     const round = (v: number) => Math.round(v * 100) / 100;
 
@@ -136,9 +162,18 @@ export async function GET(request: NextRequest) {
       loyaltyPenetrationAvg: round(loyaltyPenetrationAvg),
       productivityAvg: round(productivityAvg),
       orderTimeAvg: round(orderTimeAvg),
+      discountsTotal: round(discountsTotal),
+      yandexFoodTotal: round(yandexFoodTotal),
+      // All change metrics
       salesChange: round(salesChange),
+      salesPlanChange: round(salesPlanChange),
       ordersChange: round(ordersChange),
       avgCheckChange: round(avgCheckChange),
+      discountsChange: round(discountsChange),
+      yandexFoodChange: round(yandexFoodChange),
+      loyaltyChange: round(loyaltyChange),
+      productivityChange: round(productivityChange),
+      orderTimeChange: round(orderTimeChange),
     });
   } catch (error) {
     console.error("GET /api/reports/summary error:", error);

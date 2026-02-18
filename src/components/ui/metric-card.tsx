@@ -8,11 +8,19 @@ import type { LucideIcon } from "lucide-react"
 interface MetricCardProps {
   title: string
   value: number
-  format?: "currency" | "percent" | "number"
+  format?: "currency" | "percent" | "number" | "duration"
   trend?: number
   trendLabel?: string
+  /** When true, negative trend is shown as positive (e.g. delivery time going down is good) */
+  invertTrend?: boolean
   icon?: LucideIcon
   className?: string
+}
+
+function formatDurationValue(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return `${h}:${m.toString().padStart(2, "0")}`
 }
 
 function AnimatedNumber({
@@ -20,7 +28,7 @@ function AnimatedNumber({
   format = "currency",
 }: {
   value: number
-  format: "currency" | "percent" | "number"
+  format: "currency" | "percent" | "number" | "duration"
 }) {
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once: true })
@@ -56,6 +64,8 @@ function AnimatedNumber({
         return `${displayed.toFixed(1)}%`
       case "number":
         return new Intl.NumberFormat("ru-RU").format(Math.round(displayed))
+      case "duration":
+        return formatDurationValue(displayed)
     }
   })()
 
@@ -72,10 +82,11 @@ export function MetricCard({
   format = "currency",
   trend,
   trendLabel,
+  invertTrend = false,
   icon: Icon,
   className,
 }: MetricCardProps) {
-  const isPositive = trend !== undefined && trend >= 0
+  const isPositive = trend !== undefined && (invertTrend ? trend <= 0 : trend >= 0)
 
   return (
     <motion.div
@@ -113,7 +124,7 @@ export function MetricCard({
                 : "bg-loss-bg text-loss"
             )}
           >
-            {isPositive ? "▲" : "▼"} {isPositive ? "+" : ""}
+            {trend >= 0 ? "▲" : "▼"} {trend >= 0 ? "+" : ""}
             {trend.toFixed(1)}%
           </span>
           {trendLabel && (

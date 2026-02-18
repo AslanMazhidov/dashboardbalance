@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   DollarSign,
   Target,
@@ -11,8 +11,9 @@ import {
   Heart,
   Clock,
   CalendarIcon,
+  ArrowLeftRight,
 } from "lucide-react";
-import { subDays, format } from "date-fns";
+import { subDays, subYears, format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,13 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { MetricCard } from "@/components/ui/metric-card";
@@ -33,6 +41,8 @@ import { OrdersCheck } from "@/components/charts/orders-check";
 import { ProductivityChart } from "@/components/charts/productivity-chart";
 import { formatCurrency, formatDate, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+type CompareMode = "prev" | "year" | "custom";
 
 interface SummaryData {
   salesFact: number;
@@ -47,9 +57,18 @@ interface SummaryData {
   loyaltyPenetrationAvg: number;
   productivityAvg: number;
   orderTimeAvg: number;
+  discountsTotal: number;
+  yandexFoodTotal: number;
+  // All change metrics
   salesChange: number;
+  salesPlanChange: number;
   ordersChange: number;
   avgCheckChange: number;
+  discountsChange: number;
+  yandexFoodChange: number;
+  loyaltyChange: number;
+  productivityChange: number;
+  orderTimeChange: number;
 }
 
 interface TrendData {
@@ -71,6 +90,12 @@ interface Location {
   name: string;
 }
 
+const COMPARE_LABELS: Record<CompareMode, string> = {
+  prev: "vs пред. период",
+  year: "vs год назад",
+  custom: "vs выбр. период",
+};
+
 export default function DashboardPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [dateFrom, setDateFrom] = useState(() => subDays(new Date(), 60));
@@ -78,18 +103,37 @@ export default function DashboardPage() {
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
 
+  // Comparison period
+  const [compareMode, setCompareMode] = useState<CompareMode>("prev");
+  const [customCompareFrom, setCustomCompareFrom] = useState(() => subDays(new Date(), 120));
+  const [customCompareTo, setCustomCompareTo] = useState(() => subDays(new Date(), 61));
+  const [cmpFromOpen, setCmpFromOpen] = useState(false);
+  const [cmpToOpen, setCmpToOpen] = useState(false);
+
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [trends, setTrends] = useState<TrendData[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const trendLabel = COMPARE_LABELS[compareMode];
 
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
     params.set("dateFrom", format(dateFrom, "yyyy-MM-dd"));
     params.set("dateTo", format(dateTo, "yyyy-MM-dd"));
     if (selectedLocation !== "all") params.set("locationId", selectedLocation);
+
+    if (compareMode === "year") {
+      params.set("compareFrom", format(subYears(dateFrom, 1), "yyyy-MM-dd"));
+      params.set("compareTo", format(subYears(dateTo, 1), "yyyy-MM-dd"));
+    } else if (compareMode === "custom") {
+      params.set("compareFrom", format(customCompareFrom, "yyyy-MM-dd"));
+      params.set("compareTo", format(customCompareTo, "yyyy-MM-dd"));
+    }
+    // "prev" — no extra params, API auto-calculates
+
     return params.toString();
-  }, [dateFrom, dateTo, selectedLocation]);
+  }, [dateFrom, dateTo, selectedLocation, compareMode, customCompareFrom, customCompareTo]);
 
   useEffect(() => {
     async function fetchLocations() {
@@ -134,9 +178,6 @@ export default function DashboardPage() {
 
     fetchData();
   }, [buildParams]);
-
-  const totalDiscounts = trends.reduce((sum, d) => sum + (d.discounts ?? 0), 0);
-  const totalYandexFood = trends.reduce((sum, d) => sum + (d.yandexFood ?? 0), 0);
 
   const SkeletonCards = () => (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -220,6 +261,71 @@ export default function DashboardPage() {
         </div>
       </PageHeader>
 
+      {/* Comparison period selector */}
+      <div className="flex flex-wrap items-center gap-3">
+        <ArrowLeftRight className="h-4 w-4 text-stone-400" />
+        <span className="text-sm text-stone-500">Сравнивать с:</span>
+        <Select value={compareMode} onValueChange={(v) => setCompareMode(v as CompareMode)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="prev">Предыдущий период</SelectItem>
+            <SelectItem value="year">Год назад</SelectItem>
+            <SelectItem value="custom">Свои даты</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {compareMode === "custom" && (
+          <>
+            <Popover open={cmpFromOpen} onOpenChange={setCmpFromOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-[140px] justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(customCompareFrom, "dd.MM.yyyy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={customCompareFrom}
+                  onSelect={(date) => {
+                    if (date) setCustomCompareFrom(date);
+                    setCmpFromOpen(false);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover open={cmpToOpen} onOpenChange={setCmpToOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-[140px] justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(customCompareTo, "dd.MM.yyyy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={customCompareTo}
+                  onSelect={(date) => {
+                    if (date) setCustomCompareTo(date);
+                    setCmpToOpen(false);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </>
+        )}
+      </div>
+
       {/* === ПРОДАЖИ === */}
       <h2 className="text-base font-semibold text-slate-700">Продажи</h2>
 
@@ -233,25 +339,31 @@ export default function DashboardPage() {
             value={summary.salesFact}
             format="currency"
             trend={summary.salesChange}
-            trendLabel="vs пред. период"
+            trendLabel={trendLabel}
             icon={DollarSign}
           />
           <MetricCard
             title="План продаж"
             value={summary.salesPlan}
             format="currency"
+            trend={summary.salesPlanChange}
+            trendLabel={trendLabel}
             icon={Target}
           />
           <MetricCard
             title="Скидки"
-            value={totalDiscounts}
+            value={summary.discountsTotal}
             format="currency"
+            trend={summary.discountsChange}
+            trendLabel={trendLabel}
             icon={Percent}
           />
           <MetricCard
             title="Яндекс Еда"
-            value={totalYandexFood}
+            value={summary.yandexFoodTotal}
             format="currency"
+            trend={summary.yandexFoodChange}
+            trendLabel={trendLabel}
             icon={Truck}
           />
         </div>
@@ -284,7 +396,7 @@ export default function DashboardPage() {
             value={summary.ordersFact}
             format="number"
             trend={summary.ordersChange}
-            trendLabel="vs пред. период"
+            trendLabel={trendLabel}
             icon={ShoppingCart}
           />
           <MetricCard
@@ -292,26 +404,26 @@ export default function DashboardPage() {
             value={summary.avgCheckFact}
             format="currency"
             trend={summary.avgCheckChange}
-            trendLabel="vs пред. период"
+            trendLabel={trendLabel}
             icon={Calculator}
           />
           <MetricCard
             title="Лояльность"
             value={summary.loyaltyPenetrationAvg * 100}
             format="percent"
+            trend={summary.loyaltyChange}
+            trendLabel={trendLabel}
             icon={Heart}
           />
-          <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[var(--shadow-sm)]">
-            <div className="flex items-center justify-between">
-              <p className="text-[13px] font-medium uppercase tracking-wide text-stone-500">
-                Время выдачи
-              </p>
-              <Clock className="h-4 w-4 text-stone-400" />
-            </div>
-            <p className="mt-2 text-[36px] font-bold leading-tight tracking-tight text-stone-900 tabular-nums">
-              {formatDuration(summary.orderTimeAvg)}
-            </p>
-          </div>
+          <MetricCard
+            title="Время выдачи"
+            value={summary.orderTimeAvg}
+            format="duration"
+            trend={summary.orderTimeChange}
+            trendLabel={trendLabel}
+            invertTrend
+            icon={Clock}
+          />
         </div>
       ) : null}
 
