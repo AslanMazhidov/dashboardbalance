@@ -129,45 +129,41 @@ export default function ImportPage() {
 
       {/* Drop zone */}
       {(state === "idle" || state === "selected") && (
-        <Card>
-          <CardContent className="p-0">
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => inputRef.current?.click()}
-              className={cn(
-                "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 transition-colors",
-                isDragOver
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-muted-foreground/50"
-              )}
-            >
-              <Upload
-                className={cn(
-                  "mb-4 size-12",
-                  isDragOver ? "text-primary" : "text-muted-foreground"
-                )}
-              />
-              <p className="text-base font-medium">
-                Перетащите файл Excel сюда
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                или нажмите для выбора файла
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Поддерживаемые форматы: .xlsx, .xls (до 10 МБ)
-              </p>
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleFileInput}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 transition-colors",
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+          )}
+        >
+          <Upload
+            className={cn(
+              "mb-4 size-12",
+              isDragOver ? "text-primary" : "text-muted-foreground"
+            )}
+          />
+          <p className="text-base font-medium">
+            Перетащите файл Excel сюда
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            или нажмите для выбора файла
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Поддерживаемые форматы: .xlsx, .xls (до 10 МБ)
+          </p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleFileInput}
+          />
+        </div>
       )}
 
       {/* Selected file + upload button */}
