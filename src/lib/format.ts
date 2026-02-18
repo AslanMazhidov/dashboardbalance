@@ -31,3 +31,13 @@ export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? parseISO(date) : date;
   return format(d, "dd.MM.yyyy", { locale: ru });
 }
+
+/**
+ * Format minutes as h:mm.
+ * Example: 191 -> "3:11", 45 -> "0:45"
+ */
+export function formatDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h}:${m.toString().padStart(2, "0")}`;
+}

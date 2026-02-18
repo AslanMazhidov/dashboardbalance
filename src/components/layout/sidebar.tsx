@@ -6,12 +6,9 @@ import { useSession, signOut } from "next-auth/react";
 import {
   Coffee,
   LayoutDashboard,
-  TrendingUp,
-  BarChart3,
   PenSquare,
   MapPin,
   LogOut,
-  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,8 +24,6 @@ import {
 
 const navItems = [
   { label: "Дашборд", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Продажи", icon: TrendingUp, href: "/sales" },
-  { label: "Операционные", icon: BarChart3, href: "/operations" },
   { label: "Импорт", icon: PenSquare, href: "/import" },
   { label: "Кофейни", icon: MapPin, href: "/locations" },
 ];
