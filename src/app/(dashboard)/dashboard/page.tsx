@@ -13,13 +13,7 @@ import {
   CalendarIcon,
   ArrowLeftRight,
 } from "lucide-react";
-import {
-  subDays,
-  subYears,
-  format,
-  startOfMonth,
-  endOfMonth,
-} from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,7 +42,6 @@ import { formatCurrency, formatDate, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type PeriodMode = "months" | "dates";
-type CompareMode = "prev" | "year" | "custom";
 
 const MONTH_NAMES = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -119,12 +112,6 @@ interface Location {
   name: string;
 }
 
-const COMPARE_LABELS: Record<CompareMode, string> = {
-  prev: "vs пред. период",
-  year: "vs год назад",
-  custom: "vs выбр. период",
-};
-
 const YEAR_OPTIONS = getYearOptions();
 
 export default function DashboardPage() {
@@ -163,19 +150,47 @@ export default function DashboardPage() {
     }
   }, [dateFrom]);
 
-  // Comparison period
-  const [compareMode, setCompareMode] = useState<CompareMode>("prev");
-  const [customCompareFrom, setCustomCompareFrom] = useState(() => subDays(new Date(), 120));
-  const [customCompareTo, setCustomCompareTo] = useState(() => subDays(new Date(), 61));
+  // Comparison period (same toggle: months / dates)
+  const [cmpMode, setCmpMode] = useState<PeriodMode>("months");
+  const [cmpYear, setCmpYear] = useState(() => String(new Date().getFullYear() - 1));
+  const [cmpMonthIdx, setCmpMonthIdx] = useState(() => String(new Date().getMonth()));
+  const [cmpFrom, setCmpFrom] = useState(() => startOfMonth(new Date(new Date().getFullYear() - 1, new Date().getMonth(), 1)));
+  const [cmpTo, setCmpTo] = useState(() => endOfMonth(new Date(new Date().getFullYear() - 1, new Date().getMonth(), 1)));
   const [cmpFromOpen, setCmpFromOpen] = useState(false);
   const [cmpToOpen, setCmpToOpen] = useState(false);
+
+  const handleCmpYearChange = useCallback((y: string) => {
+    setCmpYear(y);
+    const d = new Date(Number(y), Number(cmpMonthIdx), 1);
+    setCmpFrom(startOfMonth(d));
+    setCmpTo(endOfMonth(d));
+  }, [cmpMonthIdx]);
+
+  const handleCmpMonthChange = useCallback((m: string) => {
+    setCmpMonthIdx(m);
+    const d = new Date(Number(cmpYear), Number(m), 1);
+    setCmpFrom(startOfMonth(d));
+    setCmpTo(endOfMonth(d));
+  }, [cmpYear]);
+
+  const handleCmpModeChange = useCallback((mode: PeriodMode) => {
+    setCmpMode(mode);
+    if (mode === "months") {
+      setCmpYear(String(cmpFrom.getFullYear()));
+      setCmpMonthIdx(String(cmpFrom.getMonth()));
+      setCmpFrom(startOfMonth(cmpFrom));
+      setCmpTo(endOfMonth(cmpFrom));
+    }
+  }, [cmpFrom]);
 
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [trends, setTrends] = useState<TrendData[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const trendLabel = COMPARE_LABELS[compareMode];
+  const trendLabel = cmpMode === "months"
+    ? `vs ${MONTH_NAMES[Number(cmpMonthIdx)]} ${cmpYear}`
+    : `vs ${format(cmpFrom, "dd.MM")}–${format(cmpTo, "dd.MM.yyyy")}`;
 
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
@@ -183,17 +198,11 @@ export default function DashboardPage() {
     params.set("dateTo", format(dateTo, "yyyy-MM-dd"));
     if (selectedLocation !== "all") params.set("locationId", selectedLocation);
 
-    if (compareMode === "year") {
-      params.set("compareFrom", format(subYears(dateFrom, 1), "yyyy-MM-dd"));
-      params.set("compareTo", format(subYears(dateTo, 1), "yyyy-MM-dd"));
-    } else if (compareMode === "custom") {
-      params.set("compareFrom", format(customCompareFrom, "yyyy-MM-dd"));
-      params.set("compareTo", format(customCompareTo, "yyyy-MM-dd"));
-    }
-    // "prev" — no extra params, API auto-calculates
+    params.set("compareFrom", format(cmpFrom, "yyyy-MM-dd"));
+    params.set("compareTo", format(cmpTo, "yyyy-MM-dd"));
 
     return params.toString();
-  }, [dateFrom, dateTo, selectedLocation, compareMode, customCompareFrom, customCompareTo]);
+  }, [dateFrom, dateTo, selectedLocation, cmpFrom, cmpTo]);
 
   useEffect(() => {
     async function fetchLocations() {
@@ -379,18 +388,56 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center gap-3">
         <ArrowLeftRight className="h-4 w-4 text-stone-400" />
         <span className="text-sm text-stone-500">Сравнивать с:</span>
-        <Select value={compareMode} onValueChange={(v) => setCompareMode(v as CompareMode)}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="prev">Предыдущий период</SelectItem>
-            <SelectItem value="year">Год назад</SelectItem>
-            <SelectItem value="custom">Свои даты</SelectItem>
-          </SelectContent>
-        </Select>
 
-        {compareMode === "custom" && (
+        <div className="flex rounded-lg border border-stone-200">
+          <button
+            onClick={() => handleCmpModeChange("months")}
+            className={cn(
+              "px-3 py-1.5 text-sm transition-colors rounded-l-lg",
+              cmpMode === "months"
+                ? "bg-stone-900 text-white"
+                : "text-stone-500 hover:text-stone-700"
+            )}
+          >
+            Месяц
+          </button>
+          <button
+            onClick={() => handleCmpModeChange("dates")}
+            className={cn(
+              "px-3 py-1.5 text-sm transition-colors rounded-r-lg",
+              cmpMode === "dates"
+                ? "bg-stone-900 text-white"
+                : "text-stone-500 hover:text-stone-700"
+            )}
+          >
+            Даты
+          </button>
+        </div>
+
+        {cmpMode === "months" ? (
+          <>
+            <Select value={cmpYear} onValueChange={handleCmpYearChange}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {YEAR_OPTIONS.map((y) => (
+                  <SelectItem key={y} value={y}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={cmpMonthIdx} onValueChange={handleCmpMonthChange}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTH_NAMES.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        ) : (
           <>
             <Popover open={cmpFromOpen} onOpenChange={setCmpFromOpen}>
               <PopoverTrigger asChild>
@@ -399,15 +446,15 @@ export default function DashboardPage() {
                   className="w-[140px] justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(customCompareFrom, "dd.MM.yyyy")}
+                  {format(cmpFrom, "dd.MM.yyyy")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={customCompareFrom}
+                  selected={cmpFrom}
                   onSelect={(date) => {
-                    if (date) setCustomCompareFrom(date);
+                    if (date) setCmpFrom(date);
                     setCmpFromOpen(false);
                   }}
                   initialFocus
@@ -421,15 +468,15 @@ export default function DashboardPage() {
                   className="w-[140px] justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(customCompareTo, "dd.MM.yyyy")}
+                  {format(cmpTo, "dd.MM.yyyy")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={customCompareTo}
+                  selected={cmpTo}
                   onSelect={(date) => {
-                    if (date) setCustomCompareTo(date);
+                    if (date) setCmpTo(date);
                     setCmpToOpen(false);
                   }}
                   initialFocus
