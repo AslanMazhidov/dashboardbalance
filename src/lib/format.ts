@@ -41,11 +41,12 @@ export function formatShortDate(date: string): string {
 }
 
 /**
- * Format minutes as h:mm.
- * Example: 191 -> "3:11", 45 -> "0:45"
+ * Format seconds as mm:ss.
+ * Example: 191 -> "3:11", 1640 -> "27:20"
  */
-export function formatDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return `${h}:${m.toString().padStart(2, "0")}`;
+export function formatDuration(totalSeconds: number): string {
+  const s = Math.round(totalSeconds);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
 }

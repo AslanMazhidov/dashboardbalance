@@ -23,10 +23,11 @@ interface MetricCardProps {
   className?: string
 }
 
-function formatDurationValue(minutes: number): string {
-  const h = Math.floor(minutes / 60)
-  const m = Math.round(minutes % 60)
-  return `${h}:${m.toString().padStart(2, "0")}`
+function formatDurationValue(totalSeconds: number): string {
+  const s = Math.round(totalSeconds)
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${m}:${sec.toString().padStart(2, "0")}`
 }
 
 /** Format a static value (no animation) */

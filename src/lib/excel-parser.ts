@@ -19,6 +19,33 @@ export function num(val: unknown): number {
   return isNaN(n) ? 0 : n;
 }
 
+/**
+ * Read delivery time from the formatted cell text (e.g. "3:11" → 191 seconds).
+ * Falls back to raw value if formatted text is unavailable.
+ */
+function readDeliveryTime(
+  ws: XLSX.WorkSheet,
+  wsRow: number,
+  col: number,
+): number {
+  if (col < 0) return 0;
+  const addr = XLSX.utils.encode_cell({ r: wsRow, c: col });
+  const cell = ws[addr];
+  if (!cell) return 0;
+
+  // Try formatted text first (e.g. "3:11", "27:20")
+  const text = (cell.w || "").trim();
+  const match = text.match(/^(\d{1,3}):(\d{2})$/);
+  if (match) {
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  // Fallback: raw value — if < 1 treat as Excel day-fraction, else as seconds
+  const raw = num(cell.v);
+  if (raw > 0 && raw < 1) return Math.round(raw * 86400);
+  return Math.round(raw);
+}
+
 export interface ParsedRow {
   sheetName: string;
   date: Date;
@@ -160,6 +187,7 @@ export function parseExcelBuffer(buffer: Buffer): {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown[][];
     const parsed: ParsedRow[] = [];
     let skipped = 0;
+    const wsRange = XLSX.utils.decode_range(ws["!ref"] || "A1");
 
     // 1. Find header row (the one with "Дата" in col 0)
     let headerIdx = -1;
@@ -221,10 +249,6 @@ export function parseExcelBuffer(buffer: Buffer): {
       const p = pStart;
       const dt = sec.deliveryTime;
 
-      const deliveryTimeFraction = dt >= 0 ? num(row[dt]) : 0;
-      const deliveryTimeMinutes =
-        Math.round(deliveryTimeFraction * 24 * 60 * 100) / 100;
-
       parsed.push({
         sheetName,
         date,
@@ -263,8 +287,8 @@ export function parseExcelBuffer(buffer: Buffer): {
         productivityPlan: p >= 0 ? num(row[p]) : 0,
         hoursWorked: p >= 0 ? num(row[p + 1]) : 0,
         productivityFact: p >= 0 ? num(row[p + 2]) : 0,
-        // Время выдачи заказа (single column)
-        orderDeliveryTime: deliveryTimeMinutes,
+        // Время выдачи заказа: читаем форматированный текст ячейки (мм:сс → секунды)
+        orderDeliveryTime: readDeliveryTime(ws, wsRange.s.r + i, dt),
       });
     }
 
