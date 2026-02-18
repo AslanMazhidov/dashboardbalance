@@ -29,7 +29,7 @@ export default function DashboardLayout({
       <QueryClientProvider client={queryClient}>
         <div className="flex h-screen overflow-hidden bg-slate-50">
           {/* Desktop sidebar - fixed left */}
-          <aside className="hidden w-64 shrink-0 md:block">
+          <aside className="hidden w-[218px] shrink-0 md:block">
             <Sidebar />
           </aside>
 

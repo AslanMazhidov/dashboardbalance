@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
-  Coffee,
   LayoutDashboard,
   PenSquare,
   MapPin,
@@ -50,21 +50,14 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground",
+        "flex h-full w-[218px] flex-col bg-sidebar text-sidebar-foreground",
         className
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
-          <Coffee className="size-5 text-white" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-base font-semibold tracking-tight text-sidebar-foreground">
-            Balance Coffee
-          </span>
-          <span className="text-xs text-sidebar-foreground/60">Управление бизнесом</span>
-        </div>
+      <div className="px-6 py-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Balance Coffee" style={{ height: 30, width: 'auto' }} />
       </div>
 
       <Separator className="bg-sidebar-border" />

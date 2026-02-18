@@ -55,7 +55,7 @@ export function Header() {
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="w-64 p-0"
+          className="w-[218px] p-0"
           showCloseButton={false}
         >
           <SheetTitle className="sr-only">Навигация</SheetTitle>
