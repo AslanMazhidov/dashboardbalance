@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("MANAGER") // OWNER, MANAGER, VIEWER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports DailyReport[]
+}
+
+model DailyReport {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  date       DateTime
+
+  // Продажи (день)
+  salesPlan          Float @default(0)
+  salesFact          Float @default(0)
+  discounts          Float @default(0)
+  salesWithDiscounts Float @default(0)
+  discountPercent    Float @default(0)
+  yandexFood         Float @default(0)
+  salesDeviation     Float @default(0)
+
+  // Продажи (месяц — нарастающий итог)
+  monthSalesPlan         Float @default(0)
+  monthSalesFact         Float @default(0)
+  monthSalesDeviation    Float @default(0)
+  monthSalesDeviationRub Float @default(0)
+
+  // Кол-во заказов
+  ordersPlan      Float @default(0)
+  ordersFact      Int   @default(0)
+  ordersDeviation Float @default(0)
+
+  // Карты лояльности
+  loyaltyPlan        Float @default(0)
+  loyaltyFact        Int   @default(0)
+  loyaltyPenetration Float @default(0)
+  loyaltyDeviation   Float @default(0)
+
+  // Средний чек
+  avgCheckPlan      Float @default(0)
+  avgCheckFact      Float @default(0)
+  avgCheckDeviation Float @default(0)
+
+  // Наполненность
+  fillRatePlan Float @default(0)
+  fillRateFact Float @default(0)
+  avgDishes    Float @default(0)
+  avgDrinks    Float @default(0)
+
+  // Производительность
+  portions         Float @default(0)
+  productivityPlan Float @default(0)
+  hoursWorked      Float @default(0)
+  productivityFact Float @default(0)
+
+  // Время выдачи заказа (в минутах)
+  orderDeliveryTime Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locationId, date])
+  @@index([locationId])
+  @@index([date])
+}
