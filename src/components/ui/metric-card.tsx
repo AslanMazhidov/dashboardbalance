@@ -5,12 +5,16 @@ import { useRef, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
 
+type MetricFormat = "currency" | "percent" | "number" | "duration"
+
 interface MetricCardProps {
   title: string
   value: number
-  format?: "currency" | "percent" | "number" | "duration"
+  format?: MetricFormat
   trend?: number
   trendLabel?: string
+  /** Absolute value from the comparison period */
+  compareValue?: number
   /** When true, negative trend is shown as positive (e.g. delivery time going down is good) */
   invertTrend?: boolean
   icon?: LucideIcon
@@ -23,12 +27,30 @@ function formatDurationValue(minutes: number): string {
   return `${h}:${m.toString().padStart(2, "0")}`
 }
 
+/** Format a static value (no animation) */
+function formatStatic(value: number, fmt: MetricFormat): string {
+  switch (fmt) {
+    case "currency":
+      return new Intl.NumberFormat("ru-RU", {
+        style: "currency",
+        currency: "RUB",
+        maximumFractionDigits: 0,
+      }).format(value)
+    case "percent":
+      return `${value.toFixed(1)}%`
+    case "number":
+      return new Intl.NumberFormat("ru-RU").format(Math.round(value))
+    case "duration":
+      return formatDurationValue(value)
+  }
+}
+
 function AnimatedNumber({
   value,
   format = "currency",
 }: {
   value: number
-  format: "currency" | "percent" | "number" | "duration"
+  format: MetricFormat
 }) {
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once: true })
@@ -43,7 +65,6 @@ function AnimatedNumber({
     function animate(now: number) {
       const elapsed = now - start
       const progress = Math.min(elapsed / duration, 1)
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3)
       setDisplayed(value * eased)
       if (progress < 1) requestAnimationFrame(animate)
@@ -52,26 +73,9 @@ function AnimatedNumber({
     requestAnimationFrame(animate)
   }, [isInView, value])
 
-  const formatted = (() => {
-    switch (format) {
-      case "currency":
-        return new Intl.NumberFormat("ru-RU", {
-          style: "currency",
-          currency: "RUB",
-          maximumFractionDigits: 0,
-        }).format(displayed)
-      case "percent":
-        return `${displayed.toFixed(1)}%`
-      case "number":
-        return new Intl.NumberFormat("ru-RU").format(Math.round(displayed))
-      case "duration":
-        return formatDurationValue(displayed)
-    }
-  })()
-
   return (
     <span ref={ref} className="tabular-nums">
-      {formatted}
+      {formatStatic(displayed, format)}
     </span>
   )
 }
@@ -82,6 +86,7 @@ export function MetricCard({
   format = "currency",
   trend,
   trendLabel,
+  compareValue,
   invertTrend = false,
   icon: Icon,
   className,
@@ -115,7 +120,7 @@ export function MetricCard({
       </p>
 
       {trend !== undefined && (
-        <div className="mt-2 flex items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
@@ -127,6 +132,11 @@ export function MetricCard({
             {trend >= 0 ? "▲" : "▼"} {trend >= 0 ? "+" : ""}
             {trend.toFixed(1)}%
           </span>
+          {compareValue !== undefined && (
+            <span className="text-xs tabular-nums text-stone-400">
+              было {formatStatic(compareValue, format)}
+            </span>
+          )}
           {trendLabel && (
             <span className="text-xs text-stone-400">{trendLabel}</span>
           )}

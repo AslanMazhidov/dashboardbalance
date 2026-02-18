@@ -59,6 +59,16 @@ interface SummaryData {
   orderTimeAvg: number;
   discountsTotal: number;
   yandexFoodTotal: number;
+  // Previous period absolute values
+  prevSalesFact: number;
+  prevSalesPlan: number;
+  prevOrdersFact: number;
+  prevAvgCheckFact: number;
+  prevDiscountsTotal: number;
+  prevYandexFoodTotal: number;
+  prevLoyaltyPenetrationAvg: number;
+  prevProductivityAvg: number;
+  prevOrderTimeAvg: number;
   // All change metrics
   salesChange: number;
   salesPlanChange: number;
@@ -339,6 +349,7 @@ export default function DashboardPage() {
             value={summary.salesFact}
             format="currency"
             trend={summary.salesChange}
+            compareValue={summary.prevSalesFact}
             trendLabel={trendLabel}
             icon={DollarSign}
           />
@@ -347,6 +358,7 @@ export default function DashboardPage() {
             value={summary.salesPlan}
             format="currency"
             trend={summary.salesPlanChange}
+            compareValue={summary.prevSalesPlan}
             trendLabel={trendLabel}
             icon={Target}
           />
@@ -355,6 +367,7 @@ export default function DashboardPage() {
             value={summary.discountsTotal}
             format="currency"
             trend={summary.discountsChange}
+            compareValue={summary.prevDiscountsTotal}
             trendLabel={trendLabel}
             icon={Percent}
           />
@@ -363,6 +376,7 @@ export default function DashboardPage() {
             value={summary.yandexFoodTotal}
             format="currency"
             trend={summary.yandexFoodChange}
+            compareValue={summary.prevYandexFoodTotal}
             trendLabel={trendLabel}
             icon={Truck}
           />
@@ -396,6 +410,7 @@ export default function DashboardPage() {
             value={summary.ordersFact}
             format="number"
             trend={summary.ordersChange}
+            compareValue={summary.prevOrdersFact}
             trendLabel={trendLabel}
             icon={ShoppingCart}
           />
@@ -404,6 +419,7 @@ export default function DashboardPage() {
             value={summary.avgCheckFact}
             format="currency"
             trend={summary.avgCheckChange}
+            compareValue={summary.prevAvgCheckFact}
             trendLabel={trendLabel}
             icon={Calculator}
           />
@@ -412,6 +428,7 @@ export default function DashboardPage() {
             value={summary.loyaltyPenetrationAvg * 100}
             format="percent"
             trend={summary.loyaltyChange}
+            compareValue={summary.prevLoyaltyPenetrationAvg * 100}
             trendLabel={trendLabel}
             icon={Heart}
           />
@@ -420,6 +437,7 @@ export default function DashboardPage() {
             value={summary.orderTimeAvg}
             format="duration"
             trend={summary.orderTimeChange}
+            compareValue={summary.prevOrderTimeAvg}
             trendLabel={trendLabel}
             invertTrend
             icon={Clock}

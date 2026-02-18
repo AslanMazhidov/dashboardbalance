@@ -164,6 +164,16 @@ export async function GET(request: NextRequest) {
       orderTimeAvg: round(orderTimeAvg),
       discountsTotal: round(discountsTotal),
       yandexFoodTotal: round(yandexFoodTotal),
+      // Previous period absolute values
+      prevSalesFact: round(prevSalesFact),
+      prevSalesPlan: round(prevSalesPlan),
+      prevOrdersFact: Math.round(prevOrdersFact),
+      prevAvgCheckFact: round(prevAvgCheckFact),
+      prevDiscountsTotal: round(prevDiscounts),
+      prevYandexFoodTotal: round(prevYandexFood),
+      prevLoyaltyPenetrationAvg: round(prevLoyalty),
+      prevProductivityAvg: round(prevProductivity),
+      prevOrderTimeAvg: round(prevOrderTime),
       // All change metrics
       salesChange: round(salesChange),
       salesPlanChange: round(salesPlanChange),
