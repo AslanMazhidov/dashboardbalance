@@ -498,6 +498,15 @@ export default function DashboardPage() {
       ) : summary ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
+            title="План продаж"
+            value={summary.salesPlan}
+            format="currency"
+            trend={summary.salesPlanChange}
+            compareValue={summary.prevSalesPlan}
+            trendLabel={trendLabel}
+            icon={Target}
+          />
+          <MetricCard
             title="Продажи факт"
             value={summary.salesFact}
             format="currency"
@@ -506,15 +515,6 @@ export default function DashboardPage() {
             compareValue={summary.prevSalesFact}
             trendLabel={trendLabel}
             icon={DollarSign}
-          />
-          <MetricCard
-            title="План продаж"
-            value={summary.salesPlan}
-            format="currency"
-            trend={summary.salesPlanChange}
-            compareValue={summary.prevSalesPlan}
-            trendLabel={trendLabel}
-            icon={Target}
           />
           <MetricCard
             title="Скидки"
