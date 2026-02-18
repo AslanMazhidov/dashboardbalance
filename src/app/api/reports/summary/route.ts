@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
           ordersFact: true,
           ordersPlan: true,
           discounts: true,
+          salesWithDiscounts: true,
           yandexFood: true,
         },
       }),
@@ -104,6 +105,7 @@ export async function GET(request: NextRequest) {
     const ordersFact = currentAgg._sum.ordersFact || 0;
     const ordersPlan = currentAgg._sum.ordersPlan || 0;
     const discountsTotal = currentAgg._sum.discounts || 0;
+    const salesWithDiscountsTotal = currentAgg._sum.salesWithDiscounts || 0;
     const yandexFoodTotal = currentAgg._sum.yandexFood || 0;
 
     const avgCheckFact = currentAvg._avg.avgCheckFact || 0;
@@ -163,6 +165,7 @@ export async function GET(request: NextRequest) {
       productivityAvg: round(productivityAvg),
       orderTimeAvg: round(orderTimeAvg),
       discountsTotal: round(discountsTotal),
+      salesWithDiscountsTotal: round(salesWithDiscountsTotal),
       yandexFoodTotal: round(yandexFoodTotal),
       // Previous period absolute values
       prevSalesFact: round(prevSalesFact),

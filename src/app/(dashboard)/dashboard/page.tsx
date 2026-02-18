@@ -58,6 +58,7 @@ interface SummaryData {
   productivityAvg: number;
   orderTimeAvg: number;
   discountsTotal: number;
+  salesWithDiscountsTotal: number;
   yandexFoodTotal: number;
   // Previous period absolute values
   prevSalesFact: number;
@@ -86,6 +87,8 @@ interface TrendData {
   salesPlan: number;
   salesFact: number;
   discounts: number;
+  salesWithDiscounts: number;
+  discountPercent: number;
   yandexFood: number;
   ordersFact: number;
   avgCheckFact: number;
@@ -348,6 +351,7 @@ export default function DashboardPage() {
             title="Продажи факт"
             value={summary.salesFact}
             format="currency"
+            subtitle={`со скидками: ${formatCurrency(summary.salesWithDiscountsTotal)}`}
             trend={summary.salesChange}
             compareValue={summary.prevSalesFact}
             trendLabel={trendLabel}
@@ -366,6 +370,9 @@ export default function DashboardPage() {
             title="Скидки"
             value={summary.discountsTotal}
             format="currency"
+            subtitle={summary.salesWithDiscountsTotal > 0
+              ? `${((summary.discountsTotal / summary.salesWithDiscountsTotal) * 100).toFixed(1)}% от продаж`
+              : undefined}
             trend={summary.discountsChange}
             compareValue={summary.prevDiscountsTotal}
             trendLabel={trendLabel}
@@ -494,6 +501,8 @@ export default function DashboardPage() {
                     <TableHead className="text-right">План</TableHead>
                     <TableHead className="text-right">Откл. %</TableHead>
                     <TableHead className="text-right">Скидки</TableHead>
+                    <TableHead className="text-right">Со скидками</TableHead>
+                    <TableHead className="text-right">% скидок</TableHead>
                     <TableHead className="text-right">Яндекс</TableHead>
                     <TableHead className="text-right">Заказы</TableHead>
                     <TableHead className="text-right">Ср. чек</TableHead>
@@ -528,6 +537,12 @@ export default function DashboardPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(row.discounts ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.salesWithDiscounts ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {((row.discountPercent ?? 0) * 100).toFixed(1)}%
                         </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(row.yandexFood ?? 0)}

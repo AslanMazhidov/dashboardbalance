@@ -11,6 +11,8 @@ interface MetricCardProps {
   title: string
   value: number
   format?: MetricFormat
+  /** Small text line below the main value (e.g. "со скидками: 1 300 000 ₽") */
+  subtitle?: string
   trend?: number
   trendLabel?: string
   /** Absolute value from the comparison period */
@@ -84,6 +86,7 @@ export function MetricCard({
   title,
   value,
   format = "currency",
+  subtitle,
   trend,
   trendLabel,
   compareValue,
@@ -118,6 +121,10 @@ export function MetricCard({
       <p className="mt-2 text-[36px] font-bold leading-tight tracking-tight text-stone-900">
         <AnimatedNumber value={value} format={format} />
       </p>
+
+      {subtitle && (
+        <p className="mt-0.5 text-xs tabular-nums text-stone-400">{subtitle}</p>
+      )}
 
       {trend !== undefined && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
