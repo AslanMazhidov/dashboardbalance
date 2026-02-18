@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   PenSquare,
   MapPin,
+  BarChart3,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ import {
 
 const navItems = [
   { label: "Дашборд", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Аналитика", icon: BarChart3, href: "/analytics" },
   { label: "Импорт", icon: PenSquare, href: "/import" },
   { label: "Кофейни", icon: MapPin, href: "/locations" },
 ];
