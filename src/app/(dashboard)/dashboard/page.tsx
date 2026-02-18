@@ -37,8 +37,7 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { LocationFilter } from "@/components/dashboard/location-filter";
 import { SalesPlanFact } from "@/components/charts/sales-plan-fact";
-import { OrdersCheck } from "@/components/charts/orders-check";
-import { ProductivityChart } from "@/components/charts/productivity-chart";
+import { OperationsChart } from "@/components/charts/operations-chart";
 import { formatCurrency, formatDate, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -452,27 +451,16 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {/* Charts: Orders/Check + Productivity */}
+      {/* Operations Chart */}
       {loading ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader><CardTitle>Заказы и средний чек</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-[350px] w-full animate-pulse rounded bg-muted" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Производительность</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-[350px] w-full animate-pulse rounded bg-muted" />
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader><CardTitle>Операционные показатели</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-[400px] w-full animate-pulse rounded bg-muted" />
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <OrdersCheck data={trends} />
-          <ProductivityChart data={trends} />
-        </div>
+        <OperationsChart data={trends} />
       )}
 
       {/* === ДЕТАЛИЗАЦИЯ ПО ДНЯМ === */}
