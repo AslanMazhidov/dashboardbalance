@@ -259,7 +259,7 @@ export default function FactorsPage() {
             format="currency"
             trend={rainyChange ?? undefined}
             icon={Umbrella}
-            subtitle={`${data.summary.rainyCount} дн.`}
+            subtitle={`${data.summary.rainyCount} дн. · Сухие дни ${formatCurrency(data.summary.dryAvg)}`}
           />
           {/* Temperature card */}
           <Card className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[var(--shadow-sm)]">
