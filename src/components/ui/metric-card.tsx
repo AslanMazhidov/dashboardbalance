@@ -115,7 +115,7 @@ export function MetricCard({
           {title}
         </p>
         {Icon && (
-          <Icon className="h-4 w-4 text-stone-400" />
+          <Icon className="h-4 w-4 shrink-0 text-stone-400" />
         )}
       </div>
 

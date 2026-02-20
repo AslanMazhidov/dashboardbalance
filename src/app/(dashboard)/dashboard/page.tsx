@@ -591,7 +591,7 @@ export default function DashboardPage() {
             icon={Heart}
           />
           <MetricCard
-            title="Производительность"
+            title="Произв-ость"
             value={summary.productivityAvg}
             format="currency"
             trend={summary.productivityChange}
