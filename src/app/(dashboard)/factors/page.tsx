@@ -243,8 +243,6 @@ export default function FactorsPage() {
             value={data.summary.holidayAvg}
             format="currency"
             trend={holidayChange ?? undefined}
-            compareValue={data.summary.regularAvg}
-            trendLabel="vs обычные дни"
             icon={PartyPopper}
             subtitle={`${data.summary.holidayCount} дн.`}
           />
