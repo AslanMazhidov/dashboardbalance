@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   TrendingUp,
-  TrendingDown,
   ShoppingCart,
   Receipt,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MetricCard } from "@/components/ui/metric-card";
 import {
   Table,
   TableHeader,
@@ -75,27 +75,6 @@ interface TrendsResponse {
 function calcChange(current: number, previous: number): number | null {
   if (!previous || previous === 0) return null;
   return ((current - previous) / previous) * 100;
-}
-
-function TrendBadge({ change }: { change: number | null }) {
-  if (change === null) return <span className="text-xs text-muted-foreground">—</span>;
-  const isPositive = change >= 0;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-0.5 text-xs font-medium",
-        isPositive ? "text-green-600" : "text-red-600"
-      )}
-    >
-      {isPositive ? (
-        <TrendingUp className="h-3 w-3" />
-      ) : (
-        <TrendingDown className="h-3 w-3" />
-      )}
-      {isPositive ? "+" : ""}
-      {change.toFixed(1)}%
-    </span>
-  );
 }
 
 export default function TrendsPage() {
@@ -229,48 +208,33 @@ export default function TrendsPage() {
         </div>
       ) : data ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                  <TrendingUp className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Продажи</p>
-                  <p className="text-lg font-bold">{formatCurrency(data.summary.totalSales)}</p>
-                  <TrendBadge change={salesChange} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
-                  <ShoppingCart className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Заказы</p>
-                  <p className="text-lg font-bold">{data.summary.totalOrders.toLocaleString("ru-RU")}</p>
-                  <TrendBadge change={ordersChange} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                  <Receipt className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Ср. чек</p>
-                  <p className="text-lg font-bold">{formatCurrency(data.summary.avgCheck)}</p>
-                  <TrendBadge change={checkChange} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            title="Продажи"
+            value={data.summary.totalSales}
+            format="currency"
+            trend={salesChange ?? undefined}
+            compareValue={data.previous.totalSales}
+            trendLabel="vs пред. период"
+            icon={TrendingUp}
+          />
+          <MetricCard
+            title="Заказы"
+            value={data.summary.totalOrders}
+            format="number"
+            trend={ordersChange ?? undefined}
+            compareValue={data.previous.totalOrders}
+            trendLabel="vs пред. период"
+            icon={ShoppingCart}
+          />
+          <MetricCard
+            title="Средний чек"
+            value={data.summary.avgCheck}
+            format="currency"
+            trend={checkChange ?? undefined}
+            compareValue={data.previous.avgCheck}
+            trendLabel="vs пред. период"
+            icon={Receipt}
+          />
         </div>
       ) : null}
 
