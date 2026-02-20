@@ -10,6 +10,7 @@ import {
   MapPin,
   BarChart3,
   TrendingUp,
+  CloudSun,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ const navItems = [
   { label: "Дашборд", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Аналитика", icon: BarChart3, href: "/analytics" },
   { label: "Тренды", icon: TrendingUp, href: "/trends" },
+  { label: "Факторы", icon: CloudSun, href: "/factors" },
   { label: "Импорт", icon: PenSquare, href: "/import" },
   { label: "Кофейни", icon: MapPin, href: "/locations" },
 ];

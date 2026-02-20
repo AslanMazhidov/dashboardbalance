@@ -103,3 +103,16 @@ model DailyReport {
   @@index([locationId])
   @@index([date])
 }
+
+model WeatherDay {
+  id            String   @id @default(cuid())
+  date          DateTime @unique
+  tempMin       Float
+  tempMax       Float
+  tempMean      Float
+  precipitation Float
+  weatherCode   Int
+  createdAt     DateTime @default(now())
+
+  @@index([date])
+}

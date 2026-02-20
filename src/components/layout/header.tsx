@@ -16,6 +16,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard": "Дашборд",
   "/analytics": "Аналитика",
   "/trends": "Тренды",
+  "/factors": "Факторы",
   "/import": "Импорт данных",
   "/locations": "Кофейни",
 };
