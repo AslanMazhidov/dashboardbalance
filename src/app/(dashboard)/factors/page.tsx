@@ -66,6 +66,7 @@ interface Location {
 
 interface TempRange {
   avg: number;
+  avgCheck: number;
   count: number;
   label: string;
 }
@@ -75,10 +76,14 @@ interface FactorsResponse {
   summary: {
     holidayAvg: number;
     regularAvg: number;
+    holidayAvgCheck: number;
+    regularAvgCheck: number;
     holidayCount: number;
     regularCount: number;
     rainyAvg: number;
     dryAvg: number;
+    rainyAvgCheck: number;
+    dryAvgCheck: number;
     rainyCount: number;
     dryCount: number;
     temperature: {
@@ -244,14 +249,14 @@ export default function FactorsPage() {
             format="currency"
             trend={holidayChange ?? undefined}
             icon={PartyPopper}
-            subtitle={`${data.summary.holidayCount} дн.`}
+            subtitle={`${data.summary.holidayCount} дн. · Ср. чек ${formatCurrency(data.summary.holidayAvgCheck)}`}
           />
           <MetricCard
             title="Обычные дни"
             value={data.summary.regularAvg}
             format="currency"
             icon={CalendarIcon}
-            subtitle={`${data.summary.regularCount} дн.`}
+            subtitle={`${data.summary.regularCount} дн. · Ср. чек ${formatCurrency(data.summary.regularAvgCheck)}`}
           />
           <MetricCard
             title="Дождь / Снег"
@@ -259,7 +264,7 @@ export default function FactorsPage() {
             format="currency"
             trend={rainyChange ?? undefined}
             icon={Umbrella}
-            subtitle={`${data.summary.rainyCount} дн. · Сухие дни ${formatCurrency(data.summary.dryAvg)}`}
+            subtitle={`${data.summary.rainyCount} дн. · Ср. чек ${formatCurrency(data.summary.rainyAvgCheck)} · Сухие ${formatCurrency(data.summary.dryAvg)}`}
           />
           {/* Temperature card */}
           <Card className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[var(--shadow-sm)]">
@@ -279,15 +284,20 @@ export default function FactorsPage() {
               ).map(([key, icon]) => {
                 const range = data.summary.temperature[key];
                 return (
-                  <div key={key} className="flex items-center justify-between">
+                  <div key={key} className="flex items-center justify-between gap-2">
                     <span className="text-sm text-stone-500">
                       {icon} {range.label}{" "}
                       <span className="text-xs text-stone-400">
-                        ({range.count} дн.)
+                        ({range.count})
                       </span>
                     </span>
-                    <span className="text-sm font-medium tabular-nums text-stone-900">
-                      {range.avg > 0 ? formatCurrency(range.avg) : "—"}
+                    <span className="text-right text-sm tabular-nums text-stone-900">
+                      <span className="font-medium">{range.avg > 0 ? formatCurrency(range.avg) : "—"}</span>
+                      {range.avgCheck > 0 && (
+                        <span className="ml-1 text-xs text-stone-400">
+                          / {formatCurrency(range.avgCheck)}
+                        </span>
+                      )}
                     </span>
                   </div>
                 );

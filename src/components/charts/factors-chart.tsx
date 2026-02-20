@@ -85,6 +85,13 @@ function CustomTooltip({
           <span className="font-medium">{formatCurrency(row.salesFact)}</span>
         </div>
       )}
+      {row.avgCheck !== null && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-stone-400" />
+          <span className="text-muted-foreground">Ср. чек:</span>
+          <span className="font-medium">{formatCurrency(row.avgCheck)}</span>
+        </div>
+      )}
       {row.weatherIcon && (
         <div className="flex items-center gap-2 text-sm">
           <span className="inline-block w-2.5 text-center">

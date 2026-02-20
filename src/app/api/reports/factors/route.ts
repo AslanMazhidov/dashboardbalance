@@ -187,13 +187,26 @@ export async function GET(request: NextRequest) {
       (d) => d.tempMean !== null && d.tempMean > 15,
     );
 
-    const avg = (arr: typeof withSales) =>
+    const avgSales = (arr: typeof withSales) =>
       arr.length > 0
         ? Math.round(
             (arr.reduce((s, d) => s + (d.salesFact ?? 0), 0) / arr.length) *
               100,
           ) / 100
         : 0;
+
+    const avgCheck = (arr: typeof withSales) =>
+      arr.length > 0
+        ? Math.round(
+            (arr.reduce((s, d) => s + (d.avgCheck ?? 0), 0) / arr.length) *
+              100,
+          ) / 100
+        : 0;
+
+    const avgCheckHoliday = avgCheck(holidayDays);
+    const avgCheckRegular = avgCheck(regularDays);
+    const avgCheckRainy = avgCheck(rainyDays);
+    const avgCheckDry = avgCheck(dryDays);
 
     const round = (v: number) => Math.round(v * 100) / 100;
 
@@ -202,21 +215,27 @@ export async function GET(request: NextRequest) {
       summary: {
         holidayAvg: round(avgSalesHoliday),
         regularAvg: round(avgSalesRegular),
+        holidayAvgCheck: avgCheckHoliday,
+        regularAvgCheck: avgCheckRegular,
         holidayCount: holidayDays.length,
         regularCount: regularDays.length,
         rainyAvg: round(avgSalesRainy),
         dryAvg: round(avgSalesDry),
+        rainyAvgCheck: avgCheckRainy,
+        dryAvgCheck: avgCheckDry,
         rainyCount: rainyDays.length,
         dryCount: dryDays.length,
         temperature: {
-          cold: { avg: avg(coldDays), count: coldDays.length, label: "< 0°C" },
+          cold: { avg: avgSales(coldDays), avgCheck: avgCheck(coldDays), count: coldDays.length, label: "< 0°C" },
           cool: {
-            avg: avg(coolDays),
+            avg: avgSales(coolDays),
+            avgCheck: avgCheck(coolDays),
             count: coolDays.length,
             label: "0–15°C",
           },
           warm: {
-            avg: avg(warmDays),
+            avg: avgSales(warmDays),
+            avgCheck: avgCheck(warmDays),
             count: warmDays.length,
             label: "> 15°C",
           },
