@@ -254,12 +254,10 @@ export default function FactorsPage() {
             subtitle={`${data.summary.regularCount} дн.`}
           />
           <MetricCard
-            title="Дождливые дни"
+            title="Дождь / Снег"
             value={data.summary.rainyAvg}
             format="currency"
             trend={rainyChange ?? undefined}
-            compareValue={data.summary.dryAvg}
-            trendLabel="vs сухие дни"
             icon={Umbrella}
             subtitle={`${data.summary.rainyCount} дн.`}
           />
