@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   PartyPopper,
   Umbrella,
+  Sun,
   Thermometer,
   Calendar as CalendarIcon,
 } from "lucide-react";
@@ -232,8 +233,8 @@ export default function FactorsPage() {
 
       {/* Summary cards */}
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="h-20 w-full animate-pulse rounded bg-muted" />
@@ -242,7 +243,7 @@ export default function FactorsPage() {
           ))}
         </div>
       ) : data ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <MetricCard
             title="Праздничные дни"
             value={data.summary.holidayAvg}
@@ -264,7 +265,14 @@ export default function FactorsPage() {
             format="currency"
             trend={rainyChange ?? undefined}
             icon={Umbrella}
-            subtitle={`${data.summary.rainyCount} дн. · Ср. чек ${formatCurrency(data.summary.rainyAvgCheck)} · Сухие ${formatCurrency(data.summary.dryAvg)}`}
+            subtitle={`${data.summary.rainyCount} дн. · Ср. чек ${formatCurrency(data.summary.rainyAvgCheck)}`}
+          />
+          <MetricCard
+            title="Сухие дни"
+            value={data.summary.dryAvg}
+            format="currency"
+            icon={Sun}
+            subtitle={`${data.summary.dryCount} дн. · Ср. чек ${formatCurrency(data.summary.dryAvgCheck)}`}
           />
           {/* Temperature card */}
           <Card className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[var(--shadow-sm)]">
