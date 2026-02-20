@@ -142,12 +142,13 @@ export async function GET(request: NextRequest) {
           regularDays.length
         : 0;
 
-    const rainyDays = withSales.filter(
-      (d) => d.precipitation !== null && d.precipitation > 1,
-    );
-    const dryDays = withSales.filter(
-      (d) => d.precipitation !== null && d.precipitation <= 1,
-    );
+    // Дождь/снег: осадки > 0.5мм ИЛИ WMO-код 51-86 (дождь, снег, ливень, снегопад)
+    const isPrecipDay = (d: (typeof days)[number]) =>
+      (d.precipitation !== null && d.precipitation > 0.5) ||
+      (d.weatherCode !== null && d.weatherCode >= 51 && d.weatherCode <= 86);
+
+    const rainyDays = withSales.filter(isPrecipDay);
+    const dryDays = withSales.filter((d) => !isPrecipDay(d));
     const avgSalesRainy =
       rainyDays.length > 0
         ? rainyDays.reduce((s, d) => s + (d.salesFact ?? 0), 0) /
