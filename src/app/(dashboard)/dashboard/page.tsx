@@ -10,6 +10,7 @@ import {
   Calculator,
   Heart,
   Clock,
+  Gauge,
   CalendarIcon,
   ArrowLeftRight,
 } from "lucide-react";
@@ -561,7 +562,7 @@ export default function DashboardPage() {
       {loading ? (
         <SkeletonCards />
       ) : summary ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <MetricCard
             title="Заказы"
             value={summary.ordersFact}
@@ -588,6 +589,15 @@ export default function DashboardPage() {
             compareValue={summary.prevLoyaltyPenetrationAvg * 100}
             trendLabel={trendLabel}
             icon={Heart}
+          />
+          <MetricCard
+            title="Производительность"
+            value={summary.productivityAvg}
+            format="currency"
+            trend={summary.productivityChange}
+            compareValue={summary.prevProductivityAvg}
+            trendLabel={trendLabel}
+            icon={Gauge}
           />
           <MetricCard
             title="Время выдачи"
