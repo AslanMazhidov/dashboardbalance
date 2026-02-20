@@ -15,6 +15,7 @@ import { useState } from "react";
 const pageTitles: Record<string, string> = {
   "/dashboard": "Дашборд",
   "/analytics": "Аналитика",
+  "/trends": "Тренды",
   "/import": "Импорт данных",
   "/locations": "Кофейни",
 };
