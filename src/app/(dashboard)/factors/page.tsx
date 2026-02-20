@@ -282,7 +282,7 @@ export default function FactorsPage() {
               </p>
               <Thermometer className="h-4 w-4 shrink-0 text-stone-400" />
             </div>
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-2.5">
               {(
                 [
                   ["cold", "❄️"] as const,
@@ -292,21 +292,20 @@ export default function FactorsPage() {
               ).map(([key, icon]) => {
                 const range = data.summary.temperature[key];
                 return (
-                  <div key={key} className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-stone-500">
-                      {icon} {range.label}{" "}
-                      <span className="text-xs text-stone-400">
-                        ({range.count})
-                      </span>
+                  <div key={key} className="flex items-start justify-between gap-3">
+                    <span className="shrink-0 whitespace-nowrap text-sm text-stone-500">
+                      {icon} {range.label} ({range.count})
                     </span>
-                    <span className="text-right text-sm tabular-nums text-stone-900">
-                      <span className="font-medium">{range.avg > 0 ? formatCurrency(range.avg) : "—"}</span>
+                    <div className="text-right tabular-nums">
+                      <div className="text-sm font-medium text-stone-900">
+                        {range.avg > 0 ? formatCurrency(range.avg) : "—"}
+                      </div>
                       {range.avgCheck > 0 && (
-                        <span className="ml-1 text-xs text-stone-400">
-                          / {formatCurrency(range.avgCheck)}
-                        </span>
+                        <div className="text-[11px] text-stone-400">
+                          чек {formatCurrency(range.avgCheck)}
+                        </div>
                       )}
-                    </span>
+                    </div>
                   </div>
                 );
               })}
