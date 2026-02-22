@@ -5,7 +5,6 @@ import {
   PartyPopper,
   Umbrella,
   Sun,
-  Thermometer,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,8 +232,8 @@ export default function FactorsPage() {
 
       {/* Summary cards */}
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="h-20 w-full animate-pulse rounded bg-muted" />
@@ -243,7 +242,7 @@ export default function FactorsPage() {
           ))}
         </div>
       ) : data ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             title="Праздничные дни"
             value={data.summary.holidayAvg}
@@ -274,43 +273,6 @@ export default function FactorsPage() {
             icon={Sun}
             subtitle={`${data.summary.dryCount} дн. · Ср. чек ${formatCurrency(data.summary.dryAvgCheck)}`}
           />
-          {/* Temperature card */}
-          <Card className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[var(--shadow-sm)]">
-            <div className="flex items-center justify-between">
-              <p className="text-[13px] font-medium uppercase tracking-wide text-stone-500">
-                По температуре
-              </p>
-              <Thermometer className="h-4 w-4 shrink-0 text-stone-400" />
-            </div>
-            <div className="mt-3 space-y-2.5">
-              {(
-                [
-                  ["cold", "❄️"] as const,
-                  ["cool", "🌤️"] as const,
-                  ["warm", "☀️"] as const,
-                ] as const
-              ).map(([key, icon]) => {
-                const range = data.summary.temperature[key];
-                return (
-                  <div key={key} className="flex items-start justify-between gap-3">
-                    <span className="shrink-0 whitespace-nowrap text-sm text-stone-500">
-                      {icon} {range.label} ({range.count})
-                    </span>
-                    <div className="text-right tabular-nums">
-                      <div className="text-sm font-medium text-stone-900">
-                        {range.avg > 0 ? formatCurrency(range.avg) : "—"}
-                      </div>
-                      {range.avgCheck > 0 && (
-                        <div className="text-[11px] text-stone-400">
-                          чек {formatCurrency(range.avgCheck)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
         </div>
       ) : null}
 
