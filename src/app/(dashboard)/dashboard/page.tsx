@@ -55,9 +55,13 @@ function getYearOptions() {
 
 interface SummaryData {
   salesFact: number;
+  avgDailySales: number;
+  prevAvgDailySales: number;
   salesPlan: number;
   salesDeviation: number;
   ordersFact: number;
+  avgDailyOrders: number;
+  prevAvgDailyOrders: number;
   ordersPlan: number;
   ordersDeviation: number;
   avgCheckFact: number;
@@ -189,8 +193,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const trendLabel = cmpMode === "months"
-    ? `vs ${MONTH_NAMES[Number(cmpMonthIdx)]} ${cmpYear}`
-    : `vs ${format(cmpFrom, "dd.MM")}–${format(cmpTo, "dd.MM.yyyy")}`;
+    ? `${MONTH_NAMES[Number(cmpMonthIdx)]} ${cmpYear}`
+    : `${format(cmpFrom, "dd.MM")}–${format(cmpTo, "dd.MM.yyyy")}`;
 
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
@@ -511,7 +515,7 @@ export default function DashboardPage() {
             title="Продажи факт"
             value={summary.salesFact}
             format="currency"
-            subtitle={`со скидками: ${formatCurrency(summary.salesWithDiscountsTotal)}`}
+            subtitle={`ср. в день ${formatCurrency(summary.avgDailySales)} · было ${formatCurrency(summary.prevAvgDailySales)}`}
             trend={summary.salesChange}
             compareValue={summary.prevSalesFact}
             trendLabel={trendLabel}
@@ -567,6 +571,7 @@ export default function DashboardPage() {
             title="Заказы"
             value={summary.ordersFact}
             format="number"
+            subtitle={`ср. в день ${Math.round(summary.avgDailyOrders).toLocaleString("ru-RU")} · было ${Math.round(summary.prevAvgDailyOrders).toLocaleString("ru-RU")}`}
             trend={summary.ordersChange}
             compareValue={summary.prevOrdersFact}
             trendLabel={trendLabel}

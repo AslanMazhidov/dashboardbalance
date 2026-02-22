@@ -114,9 +114,21 @@ export function MetricCard({
         <p className="text-[13px] font-medium uppercase tracking-wide text-stone-500">
           {title}
         </p>
-        {Icon && (
+        {trend !== undefined ? (
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium",
+              isPositive
+                ? "bg-profit-bg text-profit"
+                : "bg-loss-bg text-loss"
+            )}
+          >
+            {trend >= 0 ? "▲" : "▼"} {trend >= 0 ? "+" : ""}
+            {trend.toFixed(1)}%
+          </span>
+        ) : Icon ? (
           <Icon className="h-4 w-4 shrink-0 text-stone-400" />
-        )}
+        ) : null}
       </div>
 
       <p className="mt-2 text-[36px] font-bold leading-tight tracking-tight text-stone-900">
@@ -127,28 +139,10 @@ export function MetricCard({
         <p className="mt-0.5 text-xs tabular-nums text-stone-400">{subtitle}</p>
       )}
 
-      {trend !== undefined && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              isPositive
-                ? "bg-profit-bg text-profit"
-                : "bg-loss-bg text-loss"
-            )}
-          >
-            {trend >= 0 ? "▲" : "▼"} {trend >= 0 ? "+" : ""}
-            {trend.toFixed(1)}%
-          </span>
-          {compareValue !== undefined && (
-            <span className="text-xs tabular-nums text-stone-400">
-              было {formatStatic(compareValue, format)}
-            </span>
-          )}
-          {trendLabel && (
-            <span className="text-xs text-stone-400">{trendLabel}</span>
-          )}
-        </div>
+      {(compareValue !== undefined && trendLabel) && (
+        <p className="mt-2 text-xs tabular-nums text-stone-400">
+          {trendLabel} · {formatStatic(compareValue, format)}
+        </p>
       )}
     </motion.div>
   )

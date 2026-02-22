@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Fetch current and previous period aggregates in parallel
-    const [currentAgg, currentAvg, prevAgg, prevAvg] = await Promise.all([
+    const [currentAgg, currentAvg, prevAgg, prevAvg, currentDaysCount, prevDaysCount] = await Promise.all([
       prisma.dailyReport.aggregate({
         where: whereCurrentPeriod,
         _sum: {
@@ -96,6 +96,16 @@ export async function GET(request: NextRequest) {
           productivityFact: true,
           orderDeliveryTime: true,
         },
+      }),
+      prisma.dailyReport.findMany({
+        where: whereCurrentPeriod,
+        select: { date: true },
+        distinct: ["date"],
+      }),
+      prisma.dailyReport.findMany({
+        where: wherePreviousPeriod,
+        select: { date: true },
+        distinct: ["date"],
       }),
     ]);
 
@@ -149,10 +159,21 @@ export async function GET(request: NextRequest) {
     const productivityChange = pctChange(productivityAvg, prevProductivity);
     const orderTimeChange = pctChange(orderTimeAvg, prevOrderTime);
 
+    const daysWithData = currentDaysCount.length;
+    const avgDailySales = daysWithData > 0 ? salesFact / daysWithData : 0;
+    const avgDailyOrders = daysWithData > 0 ? ordersFact / daysWithData : 0;
+    const prevDaysWithData = prevDaysCount.length;
+    const prevAvgDailySales = prevDaysWithData > 0 ? prevSalesFact / prevDaysWithData : 0;
+    const prevAvgDailyOrders = prevDaysWithData > 0 ? prevOrdersFact / prevDaysWithData : 0;
+
     const round = (v: number) => Math.round(v * 100) / 100;
 
     return NextResponse.json({
       salesFact: round(salesFact),
+      avgDailySales: round(avgDailySales),
+      prevAvgDailySales: round(prevAvgDailySales),
+      avgDailyOrders: round(avgDailyOrders),
+      prevAvgDailyOrders: round(prevAvgDailyOrders),
       salesPlan: round(salesPlan),
       salesDeviation: round(salesDeviation),
       ordersFact,
